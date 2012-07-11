@@ -110,6 +110,37 @@ gfetchall() {
     echo \*\* Garbage collection
     git gc --auto
 }
+githubadd() {
+    if [ "$1" = "-rw" ]; then mode=rw; shift; else mode=ro; fi
+    if [ -z "$1" ]; then echo >&2 bad args; return; else user=$1; fi
+    if [ -z "$2" ]; then repo=$( basename $( pwd ) ); else repo=$2; fi
+    case "$mode" in
+	rw)
+	    git remote add $user git@github.com:$user/$repo.git
+	    ;;
+	ro)
+	    git remote add $user https://github.com/$user/$repo.git
+	    ;;
+    esac
+    gfetchall
+}
+githubstart() {
+    if [ "$1" = "-rw" ]; then mode=rw; shift; else mode=ro; fi
+    if [ -z "$1" ]; then echo >&2 bad args; return; else user=$1; fi
+    if [ -z "$2" ]; then echo >&2 bad args; return; else repo=$2; fi
+    mkdir $repo
+    cd $repo
+    git init
+    case "$mode" in
+	rw)
+	    githubadd -rw $user $repo
+	    ;;
+	ro)
+	    githubadd $user $repo
+	    ;;
+    esac
+    git reset --hard $user/master
+}
 
 # Java
 alias jtrace='kill -SIGQUIT'
