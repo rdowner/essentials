@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ $( id -u ) -ne 0 ]; then
+    fullpath=$( cd $( dirname $0 ) && pwd )/$( basename $0 )
+    echo "You're not root - invoking sudo $fullpath"
+    exec sudo $fullpath
+fi
+
+port list inactive
+echo -n "Uninstall these inactive ports? "
+read response
+[ "$response" == "y" ] || exit
+port uninstall inactive
+
+while true; do
+    port list leaves
+    echo -n "Uninstall these unrequested, undepended ports? "
+    read response
+    [ "$response" == "y" ] || exit
+    port uninstall leaves
+done
