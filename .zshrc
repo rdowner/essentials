@@ -124,10 +124,15 @@ githubadd() {
     esac
     gfetchall
 }
-githubstart() {
-    if [ "$1" = "-rw" ]; then mode=rw; shift; else mode=ro; fi
+ghclone() {
+    if [ "$1" = "-rw" ]; then mode=rw; shift; fi
+    if [ "$1" = "-ro" ]; then mode=ro; shift; fi
+    if [ -z "$mode" ]; then
+        if [ "$1" = "rdowner" -o "$1" = "richardcloudsoft" ]; then mode=rw; else mode=ro; fi
+    fi
     if [ -z "$1" ]; then echo >&2 bad args; return; else user=$1; fi
     if [ -z "$2" ]; then echo >&2 bad args; return; else repo=$2; fi
+    echo Cloning from github $user/$repo, mode=$mode
     mkdir $repo
     cd $repo
     git init
@@ -140,7 +145,37 @@ githubstart() {
 	    ;;
     esac
     git reset --hard $user/master
+    git branch --set-upstream-to remotes/$user/master
 }
+gwhatpush() {
+	branch=$( git branch | grep '^* ' | cut -f2 -d' ' )
+	remote=$( git config --local --get branch.${branch}.remote )
+	if [ \! -z "$remote" ]; then
+		remotebranch=$( git config --local --get branch.${branch}.merge | sed 's:refs/heads/::' )
+	else
+		remote=$( git config --local --get branch.master.remote )
+		remotebranch=${branch}
+	fi
+	echo What would be pushed, if I pushed ${branch} to ${remote}/${remotebranch} \?
+	topush=$( git push --dry-run --porcelain ${remote} ${remotebranch} | grep -E '[0-9a-f]+\.\.[0-9a-f]+' | cut -f3 )
+	if [ $? -ne 0 -o -z "$topush" ]; then
+		echo "Couldn't determine range. There was an error."
+		return 1
+	fi
+	echo Range $topush
+	git ls ${topush}
+}
+gdopush() {
+	branch=$( git branch | grep '^* ' | cut -f2 -d' ' )
+	remote=$( git config --local --get branch.${branch}.remote )
+	remotebranch=$( git config --local --get branch.${branch}.merge | sed 's:refs/heads/::' )
+	echo Push ${branch} to ${remote}/${remotebranch}
+	git push ${remote} ${remotebranch}
+}
+idea-open() {
+  open -a "IntelliJ IDEA 12" "$1"
+}
+
 
 # Java
 alias jtrace='kill -SIGQUIT'
@@ -166,5 +201,20 @@ findgrep() {
     "$findcmd[@]" | "$grepcmd[@]"
 }
 
+# Processes
+ispidalive() {
+    [ -z "$1" ] && ( echo usage: $0 pid; return 2 )
+    [ $( ps -p $1 | wc -l ) -gt 1 ] && return 1 || return 0
+}
+repkill() {
+    [ -z "$1" ] && ( echo usage: $0 pid; return 2 )
+    for sig in HUP TERM KILL; do
+	ispidalive $1 || return 0
+	echo kill -$sig $1
+	kill -$sig $1
+	sleep 3s
+    done
+    ispidalive $1 && echo 'Process could not be killed'
+}
 
 [ -f ${HOME}/.zshrc.local ] && . ${HOME}/.zshrc.local
