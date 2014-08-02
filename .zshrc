@@ -173,7 +173,7 @@ gdopush() {
 	git push ${remote} ${remotebranch}
 }
 idea-open() {
-  open -a "IntelliJ IDEA 12" "$1"
+  open -a "IntelliJ IDEA 13" "$1"
 }
 
 
