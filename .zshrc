@@ -105,45 +105,21 @@ grevert() {
     git checkout -- "$*"
 }
 gsu() { git status --porcelain | awk '$1=="??"{print $2}' }
-gfetchall() {
-    for remote in $( git remote ); do echo \*\* Fetching $remote; git fetch $remote; done
-    echo \*\* Garbage collection
-    git gc --auto
-}
 githubadd() {
-    if [ "$1" = "-rw" ]; then mode=rw; shift; else mode=ro; fi
     if [ -z "$1" ]; then echo >&2 bad args; return; else user=$1; fi
     if [ -z "$2" ]; then repo=$( basename $( pwd ) ); else repo=$2; fi
-    case "$mode" in
-	rw)
-	    git remote add $user git@github.com:$user/$repo.git
-	    ;;
-	ro)
-	    git remote add $user https://github.com/$user/$repo.git
-	    ;;
-    esac
-    gfetchall
+	git remote add $user https://github.com/$user/$repo.git
+    git fetch $user
 }
 ghclone() {
-    if [ "$1" = "-rw" ]; then mode=rw; shift; fi
-    if [ "$1" = "-ro" ]; then mode=ro; shift; fi
-    if [ -z "$mode" ]; then
-        if [ "$1" = "rdowner" -o "$1" = "richardcloudsoft" ]; then mode=rw; else mode=ro; fi
-    fi
     if [ -z "$1" ]; then echo >&2 bad args; return; else user=$1; fi
     if [ -z "$2" ]; then echo >&2 bad args; return; else repo=$2; fi
-    echo Cloning from github $user/$repo, mode=$mode
+    echo Cloning from github $user/$repo
     mkdir $repo
     cd $repo
     git init
-    case "$mode" in
-	rw)
-	    githubadd -rw $user $repo
-	    ;;
-	ro)
-	    githubadd $user $repo
-	    ;;
-    esac
+	git remote add $user https://github.com/$user/$repo.git
+    git fetch $user
     git reset --hard $user/master
     git branch --set-upstream-to remotes/$user/master
 }
@@ -218,3 +194,4 @@ repkill() {
 }
 
 [ -f ${HOME}/.zshrc.local ] && . ${HOME}/.zshrc.local
+[[ -s "$HOME/.profile" ]] && source "$HOME/.profile" # Load the default .profile

@@ -18,4 +18,8 @@ else
   let b:undo_ftplugin = "setl cms< com< fo< flp<"
 endif
 
+set linebreak
+set wrap
+set tw=80
+
 " vim:set sw=2:

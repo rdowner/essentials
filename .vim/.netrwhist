@@ -1,0 +1,4 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =2
+let g:netrw_dirhist_1='/Users/richard/git-apache/incubator-brooklyn/usage/test-support'
+let g:netrw_dirhist_2='/Users/richard/tmp/base'
